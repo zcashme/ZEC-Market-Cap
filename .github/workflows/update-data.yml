@@ -1,0 +1,51 @@
+name: 🗓 ZEC Market Cap Data Update
+
+on:
+  schedule:
+    # Run every hour
+    - cron: '0 * * * *'
+  workflow_dispatch:  # Allow manual triggering
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/scripts/**'
+      - 'backend/config/**'
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: 📦 Install dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: 🔄 Fetch and update data
+        working-directory: ./backend
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          python scripts/update_supabase.py
+      
+      - name: 📊 Commit data updates (if any)
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/raw/*.json || true
+          git diff --staged --quiet || git commit -m "🗓️ Update market data - $(date +'%Y-%m-%d %H:%M UTC')"
+          git push || echo "No changes to commit"
+
