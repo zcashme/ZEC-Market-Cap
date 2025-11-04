@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS zmc_prices (
   asset_price_zec numeric(20, 8) NOT NULL,
   market_cap_zec numeric(30, 2) NOT NULL,
   rank integer NOT NULL,
+  pct_change_1h_zec numeric(10, 4),
   pct_change_24h_zec numeric(10, 4),
+  pct_change_7d_zec numeric(10, 4),
   zec_price_usd numeric(10, 4) NOT NULL,
   data_source text DEFAULT 'coingecko',
   created_at timestamptz DEFAULT now()

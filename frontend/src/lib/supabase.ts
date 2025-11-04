@@ -25,7 +25,9 @@ export interface ZMCPrice {
   asset_price_zec: number
   market_cap_zec: number
   rank: number
+  pct_change_1h_zec: number | null
   pct_change_24h_zec: number | null
+  pct_change_7d_zec: number | null
   zec_price_usd: number
   data_source: string
   created_at: string

@@ -60,7 +60,9 @@ def compute_zec_values(coingecko_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         
         asset_price_usd = price_data["usd"]
         asset_market_cap_usd = price_data.get("usd_market_cap", 0)
+        asset_change_1h_usd = price_data.get("usd_1h_change", None)
         asset_change_24h_usd = price_data.get("usd_24h_change", None)
+        asset_change_7d_usd = price_data.get("usd_7d_change", None)
         
         # Compute ZEC-denominated values
         asset_price_zec = asset_price_usd / zec_price_usd
@@ -71,13 +73,15 @@ def compute_zec_values(coingecko_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         else:
             market_cap_zec = 0
         
-        # Compute 24h change in ZEC terms
+        # Compute price changes in ZEC terms
         # The change percentage in ZEC terms is the same as USD terms
         # because: (asset_price_zec_new / asset_price_zec_old) - 1
         # = (asset_price_usd_new / zec_usd) / (asset_price_usd_old / zec_usd) - 1
         # = (asset_price_usd_new / asset_price_usd_old) - 1
-        # So pct_change_24h_zec ≈ pct_change_24h_usd
+        # So pct_change_*_zec ≈ pct_change_*_usd
+        pct_change_1h_zec = asset_change_1h_usd if asset_change_1h_usd is not None else None
         pct_change_24h_zec = asset_change_24h_usd if asset_change_24h_usd is not None else None
+        pct_change_7d_zec = asset_change_7d_usd if asset_change_7d_usd is not None else None
         
         # Get symbol and name
         asset_symbol = ASSET_SYMBOLS.get(asset_id, asset_id.upper()[:3])
@@ -89,7 +93,9 @@ def compute_zec_values(coingecko_data: Dict[str, Any]) -> List[Dict[str, Any]]:
             "asset_name": asset_name,
             "asset_price_zec": round(asset_price_zec, 8),
             "market_cap_zec": round(market_cap_zec, 2),
+            "pct_change_1h_zec": round(pct_change_1h_zec, 4) if pct_change_1h_zec is not None else None,
             "pct_change_24h_zec": round(pct_change_24h_zec, 4) if pct_change_24h_zec is not None else None,
+            "pct_change_7d_zec": round(pct_change_7d_zec, 4) if pct_change_7d_zec is not None else None,
             "zec_price_usd": round(zec_price_usd, 4),
             "data_source": "coingecko"
         })
@@ -106,9 +112,9 @@ def compute_zec_values(coingecko_data: Dict[str, Any]) -> List[Dict[str, Any]]:
 if __name__ == "__main__":
     # Test with sample data
     sample_data = {
-        "bitcoin": {"usd": 68000, "usd_market_cap": 1300000000000, "usd_24h_change": 2.5},
-        "ethereum": {"usd": 3400, "usd_market_cap": 400000000000, "usd_24h_change": -1.2},
-        "zcash": {"usd": 26.32, "usd_market_cap": 400000000, "usd_24h_change": 0.8}
+        "bitcoin": {"usd": 68000, "usd_market_cap": 1300000000000, "usd_1h_change": 0.5, "usd_24h_change": 2.5, "usd_7d_change": 5.2},
+        "ethereum": {"usd": 3400, "usd_market_cap": 400000000000, "usd_1h_change": -0.3, "usd_24h_change": -1.2, "usd_7d_change": -2.1},
+        "zcash": {"usd": 26.32, "usd_market_cap": 400000000, "usd_1h_change": 0.2, "usd_24h_change": 0.8, "usd_7d_change": 1.5}
     }
     
     try:
