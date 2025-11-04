@@ -5,7 +5,7 @@ interface MarketTableProps {
   data: ZMCPrice[]
 }
 
-type SortField = 'rank' | 'asset_name' | 'asset_price_zec' | 'market_cap_zec' | 'pct_change_24h_zec'
+type SortField = 'rank' | 'asset_name' | 'asset_price_zec' | 'market_cap_zec' | 'pct_change_1h_zec' | 'pct_change_24h_zec' | 'pct_change_7d_zec'
 type SortDirection = 'asc' | 'desc'
 
 export const MarketTable: React.FC<MarketTableProps> = ({ data }) => {
@@ -34,9 +34,17 @@ export const MarketTable: React.FC<MarketTableProps> = ({ data }) => {
           aVal = a.market_cap_zec
           bVal = b.market_cap_zec
           break
+        case 'pct_change_1h_zec':
+          aVal = a.pct_change_1h_zec ?? 0
+          bVal = b.pct_change_1h_zec ?? 0
+          break
         case 'pct_change_24h_zec':
           aVal = a.pct_change_24h_zec ?? 0
           bVal = b.pct_change_24h_zec ?? 0
+          break
+        case 'pct_change_7d_zec':
+          aVal = a.pct_change_7d_zec ?? 0
+          bVal = b.pct_change_7d_zec ?? 0
           break
         default:
           return 0
@@ -131,11 +139,33 @@ export const MarketTable: React.FC<MarketTableProps> = ({ data }) => {
               </th>
               <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('pct_change_1h_zec')}
+              >
+                <div className="flex items-center gap-1">
+                  1h Change
+                  {sortField === 'pct_change_1h_zec' && (
+                    <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+              </th>
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort('pct_change_24h_zec')}
               >
                 <div className="flex items-center gap-1">
                   24h Change
                   {sortField === 'pct_change_24h_zec' && (
+                    <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                  )}
+                </div>
+              </th>
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('pct_change_7d_zec')}
+              >
+                <div className="flex items-center gap-1">
+                  7d Change
+                  {sortField === 'pct_change_7d_zec' && (
                     <span>{sortDirection === 'asc' ? '↑' : '↓'}</span>
                   )}
                 </div>
@@ -159,6 +189,22 @@ export const MarketTable: React.FC<MarketTableProps> = ({ data }) => {
                   {formatMarketCap(asset.market_cap_zec)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  {asset.pct_change_1h_zec !== null ? (
+                    <span
+                      className={`font-medium ${
+                        asset.pct_change_1h_zec >= 0
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                      }`}
+                    >
+                      {asset.pct_change_1h_zec >= 0 ? '+' : ''}
+                      {formatNumber(asset.pct_change_1h_zec)}%
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">N/A</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
                   {asset.pct_change_24h_zec !== null ? (
                     <span
                       className={`font-medium ${
@@ -169,6 +215,22 @@ export const MarketTable: React.FC<MarketTableProps> = ({ data }) => {
                     >
                       {asset.pct_change_24h_zec >= 0 ? '+' : ''}
                       {formatNumber(asset.pct_change_24h_zec)}%
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">N/A</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  {asset.pct_change_7d_zec !== null ? (
+                    <span
+                      className={`font-medium ${
+                        asset.pct_change_7d_zec >= 0
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                      }`}
+                    >
+                      {asset.pct_change_7d_zec >= 0 ? '+' : ''}
+                      {formatNumber(asset.pct_change_7d_zec)}%
                     </span>
                   ) : (
                     <span className="text-gray-400">N/A</span>

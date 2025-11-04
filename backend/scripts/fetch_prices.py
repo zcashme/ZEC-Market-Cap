@@ -44,15 +44,18 @@ def fetch_prices(
     if assets is None:
         assets = load_assets()
     
-    # Build API URL
+    # Build API URL - use /coins/markets endpoint to get 1h, 24h, and 7d price changes
     asset_ids = ",".join(assets)
-    url = f"{COINGECKO_BASE_URL}/simple/price"
+    url = f"{COINGECKO_BASE_URL}/coins/markets"
     
     params = {
         "ids": asset_ids,
-        "vs_currencies": "usd",
-        "include_market_cap": "true",
-        "include_24hr_change": "true"
+        "vs_currency": "usd",
+        "order": "market_cap_desc",
+        "per_page": 250,
+        "page": 1,
+        "sparkline": "false",
+        "price_change_percentage": "1h,24h,7d"
     }
     
     # Retry logic
@@ -62,11 +65,30 @@ def fetch_prices(
             response = requests.get(url, params=params, timeout=10)
             response.raise_for_status()
             
-            data = response.json()
+            market_data = response.json()
             
-            # Validate that ZEC data exists
-            if "zcash" not in data or "usd" not in data["zcash"]:
+            # Validate that we got data
+            if not market_data or not isinstance(market_data, list):
+                raise ValueError("Invalid API response format")
+            
+            # Check if ZEC data exists
+            zec_data = next((item for item in market_data if item.get("id") == "zcash"), None)
+            if not zec_data or "current_price" not in zec_data:
                 raise ValueError("ZEC price data not found in API response")
+            
+            # Convert market data format to the format expected by compute_zec_values
+            # Transform from list of market objects to dict keyed by asset ID
+            data = {}
+            for item in market_data:
+                asset_id = item.get("id")
+                if asset_id:
+                    data[asset_id] = {
+                        "usd": item.get("current_price", 0),
+                        "usd_market_cap": item.get("market_cap", 0),
+                        "usd_24h_change": item.get("price_change_percentage_24h"),
+                        "usd_1h_change": item.get("price_change_percentage_1h_in_currency"),
+                        "usd_7d_change": item.get("price_change_percentage_7d_in_currency")
+                    }
             
             # Optional: Save raw response for audit trail
             raw_dir = Path(__file__).parent.parent.parent / "data" / "raw"
@@ -75,7 +97,7 @@ def fetch_prices(
             timestamp_str = time.strftime("%Y%m%d_%H%M%S")
             raw_file = raw_dir / f"coingecko_{timestamp_str}.json"
             with open(raw_file, "w") as f:
-                json.dump(data, f, indent=2)
+                json.dump(market_data, f, indent=2)
             
             return data
             
@@ -95,7 +117,7 @@ if __name__ == "__main__":
         data = fetch_prices()
         print("Successfully fetched prices:")
         for asset_id, price_data in data.items():
-            print(f"  {asset_id}: ${price_data.get('usd', 'N/A')}")
+            print(f"  {asset_id}: ${price_data.get('usd', 'N/A')} (1h: {price_data.get('usd_1h_change', 'N/A')}%, 24h: {price_data.get('usd_24h_change', 'N/A')}%, 7d: {price_data.get('usd_7d_change', 'N/A')}%)")
     except Exception as e:
         print(f"Error fetching prices: {e}")
         exit(1)
